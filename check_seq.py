@@ -9,7 +9,8 @@ def check_seq(played_cards):
         print('Invalid Play, Try Again')
         played_cards.clear()
 
-    played_cards = sorted(played_cards, reverse=True)
+    played_cards = sorted(
+        played_cards, key=lambda card: int(card[1:]), reverse=True)
     played_cards = list(map(lambda card: card.replace(
         '11', 'J').replace('12', 'Q').replace('13', 'K'), played_cards))
 
