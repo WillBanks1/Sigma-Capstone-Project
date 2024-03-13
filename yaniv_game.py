@@ -11,21 +11,11 @@ def shuffle_fresh_pack():
     suits = ["S", "C", "D", "H"]
     values = ["2", "3", "4", "5", "6", "7",
               "8", "9", "10", "J", "Q", "K"]
-    unshuffled_cards = [suit+value for suit in suits for value in values]
+    unshuffled_cards = [
+        suit+value for suit in suits for value in values] + jokers
     shuffled_cards = list(unshuffled_cards)
     random.shuffle(shuffled_cards)
     return shuffled_cards
-
-
-def first_dealer(players):
-    cards = shuffle_fresh_pack()
-    dealer = []
-    for i in range(0, players):
-        x = random.choice(cards)
-        cards.remove(x)
-        dealer.append(card_values.get(x[1:]))
-    dealer = [(f'Player {idx}', score) for idx, score in enumerate(dealer, 1)]
-    return dealer
 
 
 def deal_fresh_pack(players):
@@ -89,7 +79,7 @@ def check_single_card(played_cards):
 
 
 def check_set(played_cards):
-    set_check = [card[1:] for card in played_cards]
+    set_check = [card[1:] for card in played_cards if card[0] != "J"]
     if (len(set(set_check)) != 1) or (len(played_cards)) == 1:
         print('Invalid Play, Try Again')
         played_cards.clear()
@@ -104,13 +94,46 @@ def check_seq(played_cards):
     number_check = sorted([int(card[1:]) for card in played_cards])
 
     if ((len(set(suit_check)) != 1) and
-            (number_check != list(range(number_check[0], number_check[-1] + 1, 1)))):
+            (number_check != list(range(number_check[0], number_check[-1] + 1, 1)))) or len(played_cards) < 3:
         print('Invalid Play, Try Again')
         played_cards.clear()
 
-    played_cards = sorted(played_cards, reverse=True)
+    played_cards = sorted(
+        played_cards, key=lambda card: int(card[1:]), reverse=True)
     played_cards = list(map(lambda card: card.replace(
         '11', 'J').replace('12', 'Q').replace('13', 'K'), played_cards))
+
+    return played_cards
+
+
+def check_joker_seq(played_cards):
+    suit_check = [card[0] for card in played_cards]
+    if (len(set(suit_check)) == 2) and (len(played_cards) >= 3):
+        seq1 = list(map(lambda card: card[0] + card[1:].replace(
+            'J', '11').replace('Q', '12').replace('K', '13'), played_cards))
+        seq1 = sorted([card for card in seq1 if card[0] != "J"],
+                      key=lambda card: int(card[1:]))
+        seq2 = list(range(int(seq1[0][1:]), int(seq1[-1][1:])+1, 1))
+        seq2 = [seq1[0][0] + str(i) for i in seq2]
+
+        for i in range(len(seq2)):
+            if seq2[i] not in seq1:
+                seq1.insert(i, "J0")
+
+        if seq1.count("J0") == played_cards.count("J0"):
+            played_cards = seq1
+        elif seq1.count("J0") < played_cards.count("J0"):
+            joker_count = played_cards.count("J0") - seq1.count("J0")
+            seq1 += ["J0"] * joker_count
+            played_cards = seq1
+        else:
+            played_cards.clear()
+
+        played_cards.reverse()
+        played_cards = list(map(lambda card: card[0] + card[1:].replace(
+            '11', 'J').replace('12', 'Q').replace('13', 'K'), played_cards))
+    else:
+        played_cards.clear()
 
     return played_cards
 
@@ -149,7 +172,7 @@ def call_yaniv(player):
                 continue
             print(f'But player {i+1} scored {player_scores[i]}')
 
-        print(f'Player {player + 1} loses.')
+        print(f'Player {player} loses.')
         print('The final scores are:')
         for i in range(players+1):
             print(f'Player {i+1}: {player_scores[i]}')
@@ -188,7 +211,10 @@ def player_turn(player):
         elif card_play == 'set':
             played_cards = check_set(played_cards)
         elif card_play == 'seq':
-            played_cards = check_seq(played_cards)
+            if "J0" in played_cards:
+                played_cards = check_joker_seq(played_cards)
+            else:
+                played_cards = check_seq(played_cards)
 
     which_pile = input("""Which pile are you going to take a card from?
                            faced up (type 'u') or faced down (type 'd') """)

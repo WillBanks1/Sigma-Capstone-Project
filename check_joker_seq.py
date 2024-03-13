@@ -1,6 +1,6 @@
 def check_joker_seq(played_cards):
     suit_check = [card[0] for card in played_cards]
-    if len(set(suit_check)) == 2:
+    if (len(set(suit_check)) == 2) and (len(played_cards) >= 3):
         seq1 = list(map(lambda card: card[0] + card[1:].replace(
             'J', '11').replace('Q', '12').replace('K', '13'), played_cards))
         seq1 = sorted([card for card in seq1 if card[0] != "J"],
@@ -28,6 +28,3 @@ def check_joker_seq(played_cards):
         played_cards.clear()
 
     return played_cards
-
-
-print(check_joker_seq(played_cards))

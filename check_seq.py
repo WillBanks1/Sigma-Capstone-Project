@@ -5,7 +5,7 @@ def check_seq(played_cards):
     number_check = sorted([int(card[1:]) for card in played_cards])
 
     if ((len(set(suit_check)) != 1) and
-            (number_check != list(range(number_check[0], number_check[-1] + 1, 1)))):
+            (number_check != list(range(number_check[0], number_check[-1] + 1, 1)))) or len(played_cards) < 3:
         print('Invalid Play, Try Again')
         played_cards.clear()
 

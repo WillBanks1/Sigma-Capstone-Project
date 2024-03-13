@@ -22,7 +22,10 @@ def player_turn(player):
         elif card_play == 'set':
             played_cards = check_set(played_cards)
         elif card_play == 'seq':
-            played_cards = check_seq(played_cards)
+            if "J0" in played_cards:
+                played_cards = check_joker_seq(played_cards)
+            else:
+                played_cards = check_seq(played_cards)
 
     which_pile = input("""Which pile are you going to take a card from?
                            faced up (type 'u') or faced down (type 'd') """)
