@@ -1,5 +1,6 @@
 import random
 yaniv = False
+card_count = 0
 card_values = {"1": 1, "2": 2, "3": 3, "4": 4,
                "5": 5, "6": 6, "7": 7, "8": 8,
                "9": 9, "10": 10, "J": 10, "Q": 10, "K": 10, "0": 0
@@ -157,16 +158,16 @@ def call_yaniv(player):
 
     elif (player_scores[player-1] <= 5) and ([player_scores.index(player_scores[player-1])]) == winner_index:
         yaniv = True
-        print(f'Player {player} called yaniv and won with a score of {
-              player_scores[player-1]}')
+        print(f"""Player {player} called yaniv and won with a score of {
+              player_scores[player-1]}""")
         print('The final scores are:')
         for i in range(players+1):
             print(f'Player {i+1}: {player_scores[i]}')
 
     elif player_scores.index(player_scores[player-1]) != winner_index:
         yaniv = True
-        print(f'Player {player} called yaniv with a score of {
-              player_scores[player-1]}.')
+        print(f"""Player {player} called yaniv with a score of {
+              player_scores[player-1]}.""")
         for i in winner_index:
             if i == player:
                 continue
@@ -183,12 +184,56 @@ def call_yaniv(player):
 def player_greeting(player):
     print(f'Hi player {player}')
     print(f'Your hand is: {players_cards[player-1]}')
-    print(f'Top card of faced up pile is: {faced_up_pile[0]}')
+    print(f'The previous player played {card_count} card(s)')
+    if (card_count == 1) or (card_count == 0):
+        print(f'Top card of faced up pile is: {faced_up_pile[0]}')
+    else:
+        print(f'The top {card_count} cards of the faced up pile are: {faced_up_pile[:card_count]}')
     return
 
+def pick_card_pile(player):
+    which_pile = input("""Which pile are you going to take a card from?
+                           faced up (type 'u') or faced down (type 'd') """)
+    while (which_pile != 'u') and (which_pile != 'd'):
+        print("You must enter either 'u' or 'd'")
+        which_pile = input("""Which pile are you going to take a card from?
+                           faced up (type 'u') or faced down (type 'd') """)
+    if which_pile == 'd':
+        players_cards[player-1].append(cards[0])
+        cards.remove(cards[0])
+    
+    elif which_pile == 'u':
+        if card_count > 1:
+            card_choice = input(f'You can take either {faced_up_pile[0]} or {faced_up_pile[card_count-1]} ')
+            while (card_choice != faced_up_pile[0]) and (card_choice != faced_up_pile[card_count-1]):
+                print("Invalid card choice.")
+                card_choice = input(f'You can take either {faced_up_pile[0]} or {faced_up_pile[card_count-1]} ')
+        else:
+            card_choice = faced_up_pile[0]
+        
+        players_cards[player-1].append(card_choice)
+        faced_up_pile.remove(card_choice)
+
+    return players_cards, cards, faced_up_pile
 
 def player_turn(player):
+    global players_cards
+    global cards
+    global faced_up_pile
     global yaniv
+    global card_count
+    if not cards:
+        cards = faced_up_pile.reverse()
+        faced_up_pile.clear()
+        faced_up_card = cards[0]
+        while card_values.get(faced_up_card[1:]) < 5:
+            cards.remove(cards[0])
+            cards.append(faced_up_card)
+            faced_up_card = cards[0]
+
+        cards.remove(cards[0])
+        faced_up_pile.append(faced_up_card)
+        
     player_greeting(player)
     played_cards = []
     while played_cards == []:
@@ -216,25 +261,13 @@ def player_turn(player):
             else:
                 played_cards = check_seq(played_cards)
 
-    which_pile = input("""Which pile are you going to take a card from?
-                           faced up (type 'u') or faced down (type 'd') """)
-
-    while (which_pile != 'u') and (which_pile != 'd'):
-        print("You must enter either 'u' or 'd'")
-        which_pile = input("""Which pile are you going to take a card from?
-                           faced up (type 'u') or faced down (type 'd') """)
-
-    if which_pile == 'u':
-        players_cards[player-1].append(faced_up_pile[0])
-        faced_up_pile.remove(faced_up_pile[0])
-
-    elif which_pile == 'd':
-        players_cards[player-1].append(cards[0])
-        cards.remove(cards[0])
+    players_cards, cards, faced_up_pile = pick_card_pile(player)
 
     for card in played_cards:
         players_cards[player-1].remove(card)
         faced_up_pile.insert(0, card)
+    
+    card_count = len(played_cards)
 
     return players_cards, cards, faced_up_pile, yaniv
 
